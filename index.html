@@ -927,6 +927,7 @@
           <th>Fundo</th>
           <th>Retira</th>
           <th>Fecha Solicitud</th>
+          <th>Fecha Retiro</th>
           <th>Estado</th>
           <th>Ver</th>
         </tr>
@@ -1130,6 +1131,7 @@ function renderRow(d, actions=true) {
     <td>${d.fundo}</td>
     <td>${d.retira}</td>
     <td style="color:var(--text3);font-size:11px">${d.fecha}</td>
+    <td style="color:var(--text3);font-size:11px">${d.fecha_retiro||'—'}</td>
     <td>${statusBadge(d.status)}</td>
     <td onclick="event.stopPropagation()">${act}</td>
   </tr>`;
@@ -1287,6 +1289,7 @@ function openModal(id) {
       <div class="detail-item"><div class="detail-label">Cód. Fundo</div><div class="detail-value" style="font-family:'JetBrains Mono',monospace">${d.codFundo}</div></div>
       <div class="detail-item"><div class="detail-label">Nombre Fundo</div><div class="detail-value">${d.fundo}</div></div>
       <div class="detail-item"><div class="detail-label">Fecha Solicitud</div><div class="detail-value">${d.fecha}</div></div>
+      <div class="detail-item"><div class="detail-label">Fecha Retiro</div><div class="detail-value">${d.fecha_retiro||'—'}</div></div>
       <div class="detail-item"><div class="detail-label">Observaciones</div><div class="detail-value">${d.obs||'—'}</div></div>
     </div>
     <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Seguimiento del despacho</div>
@@ -1445,7 +1448,8 @@ function clearForm() {
 function downloadForm() {
   const vals = {
     'Nº Ensayo': document.getElementById('f-ensayo').value,
-    'Fecha': document.getElementById('f-fecha').value,
+    'Fecha Solicitud': document.getElementById('f-fecha').value,
+    'Fecha Retiro': document.getElementById('f-fecha-retiro').value,
     'Solicitante': document.getElementById('f-solicitante').value,
     'Área': document.getElementById('f-area').value,
     'Especie': document.getElementById('f-especie').value,
@@ -1482,6 +1486,7 @@ Quien Retira:    ${d.retira}
 Cód. Fundo:      ${d.codFundo}
 Nombre Fundo:    ${d.fundo}
 Fecha Solicitud: ${d.fecha}
+Fecha Retiro:    ${d.fecha_retiro||'—'}
 Observaciones:   ${d.obs||'—'}
 ${d.razonRechazo?'\nMotivo Rechazo:\n'+d.razonRechazo:''}
 
