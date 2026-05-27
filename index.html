@@ -1566,7 +1566,7 @@ function showToast(msg) {
 
 const SHEET_ID   = '1zPWnPXCqog8doUe5znolhznfWtgrSRl5dQEaPED1_8I';
 const SHEET_TAB  = 'Despachos';
-const APPS_SCRIPT_URL = localStorage.getItem('gs_write_url') || '';
+const APPS_SCRIPT_URL = localStorage.getItem('gs_write_url') || 'https://script.google.com/macros/s/AKfycbwqS6em0Kr2U38aDuFHHdomef7Hfz4zo2-rYAq-MJZfP1WLc4E7VHPrb4YrMbPL9wCZ/exec';
 let GS_CONNECTED = false;
 
 function setSheetURL(url) {
@@ -1710,26 +1710,43 @@ function estadoToKey(s) {
 async function gsSave(entry) {
   if(!APPS_SCRIPT_URL) return false;
   try {
+    // Mapear claves internas → nombres exactos de columna en Google Sheet
+    const row = {
+      Row_ID:          entry.id,
+      Num_Ensayo:      entry.id,
+      Solicitante:     entry.solicitante,
+      Area:            entry.area,
+      Especie:         entry.especie,
+      Genotipo:        entry.genotipo,
+      Cantidad:        entry.cantidad,
+      Quien_Retira:    entry.retira,
+      Codigo_Fundo:    entry.codFundo,
+      Nombre_Fundo:    entry.fundo,
+      Fecha_Solicitud: entry.fecha,
+      Fecha_Retiro:    entry.fecha_retiro || '',
+      Estado:          'Pendiente',
+      Observaciones:   entry.obs || '',
+      Motivo_Rechazo:  '',
+      Adjuntos:        ''
+    };
     const r = await fetch(APPS_SCRIPT_URL, {
-      method:'POST', mode:'cors',
+      method:'POST', mode:'no-cors',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({action:'append', row: entry})
+      body: JSON.stringify({action:'append', row})
     });
-    const d = await r.json();
-    return d.status === 'ok';
-  } catch(e) { return false; }
+    return true;
+  } catch(e) { console.warn('gsSave error:', e); return false; }
 }
 
 async function gsUpdateStatus(id, newStatus, razonRechazo='') {
   if(!APPS_SCRIPT_URL) return false;
   try {
     const r = await fetch(APPS_SCRIPT_URL, {
-      method:'POST', mode:'cors',
+      method:'POST', mode:'no-cors',
       headers:{'Content-Type':'application/json'},
       body: JSON.stringify({action:'updateStatus', id, newStatus, razonRechazo})
     });
-    const d = await r.json();
-    return d.status === 'ok';
+    return true;
   } catch(e) { return false; }
 }
 
