@@ -790,37 +790,34 @@
   <div class="kpi-grid">
     <div class="kpi-card green">
       <div class="kpi-label">Total Despachado</div>
-      <div class="kpi-value">284,500</div>
+      <div class="kpi-value" id="kpi-total">—</div>
       <div class="kpi-meta">plantas enviadas</div>
-      <span class="kpi-badge badge-up">↑ +12% vs 2025</span>
     </div>
     <div class="kpi-card lime">
       <div class="kpi-label">Nº Despachos</div>
-      <div class="kpi-value">47</div>
-      <div class="kpi-meta">órdenes procesadas</div>
-      <span class="kpi-badge badge-up">↑ +8 vs 2025</span>
+      <div class="kpi-value" id="kpi-count">—</div>
+      <div class="kpi-meta">órdenes registradas</div>
     </div>
     <div class="kpi-card gold">
       <div class="kpi-label">Cumplimiento</div>
-      <div class="kpi-value">91.5%</div>
-      <div class="kpi-meta">despachos a tiempo</div>
+      <div class="kpi-value" id="kpi-cumpl">—</div>
+      <div class="kpi-meta">despachos entregados</div>
       <span class="kpi-badge badge-neutral">Meta: 95%</span>
     </div>
     <div class="kpi-card blue">
       <div class="kpi-label">En Tránsito</div>
-      <div class="kpi-value">3</div>
+      <div class="kpi-value" id="kpi-transito">—</div>
       <div class="kpi-meta">despachos activos</div>
     </div>
     <div class="kpi-card warn">
       <div class="kpi-label">Pendientes</div>
-      <div class="kpi-value">6</div>
+      <div class="kpi-value" id="kpi-pendiente">—</div>
       <div class="kpi-meta">solicitudes en espera</div>
     </div>
     <div class="kpi-card red">
       <div class="kpi-label">Rechazados</div>
-      <div class="kpi-value">4</div>
+      <div class="kpi-value" id="kpi-rechazado">—</div>
       <div class="kpi-meta">solicitudes rechazadas</div>
-      <span class="kpi-badge badge-down">↑ +2 vs 2025</span>
     </div>
   </div>
 
@@ -958,6 +955,10 @@
       <div class="form-group">
         <label>Fecha de Solicitud</label>
         <input type="text" id="f-fecha" readonly style="background:var(--surface2);color:var(--text3);">
+      </div>
+      <div class="form-group">
+        <label>Fecha de Retiro <span class="required-mark">*</span></label>
+        <input type="date" id="f-fecha-retiro">
       </div>
       <div class="form-group">
         <label>Nombre del Solicitante <span class="required-mark">*</span></label>
@@ -1132,6 +1133,24 @@ function renderRow(d, actions=true) {
     <td>${statusBadge(d.status)}</td>
     <td onclick="event.stopPropagation()">${act}</td>
   </tr>`;
+}
+
+function renderKPIs() {
+  const total     = DATA.reduce((s,d) => s + (parseInt(d.cantidad)||0), 0);
+  const count     = DATA.length;
+  const entregado = DATA.filter(d => d.status === 'entregado').length;
+  const transito  = DATA.filter(d => d.status === 'en_transito').length;
+  const pendiente = DATA.filter(d => d.status === 'pendiente' || d.status === 'en_revision').length;
+  const rechazado = DATA.filter(d => d.status === 'rechazado').length;
+  const cumpl     = count > 0 ? Math.round((entregado / count) * 100) : 0;
+
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  set('kpi-total',    total.toLocaleString('es-CL'));
+  set('kpi-count',    count);
+  set('kpi-cumpl',    cumpl + '%');
+  set('kpi-transito', transito);
+  set('kpi-pendiente',pendiente);
+  set('kpi-rechazado',rechazado);
 }
 
 function renderRecientes() {
@@ -1396,6 +1415,7 @@ function submitForm() {
     codFundo: document.getElementById('f-cod-fundo').value.trim(),
     fundo: document.getElementById('f-fundo').value.trim(),
     fecha: document.getElementById('f-fecha').value,
+    fecha_retiro: document.getElementById('f-fecha-retiro').value,
     status: 'pendiente',
     obs: document.getElementById('f-obs').value.trim(),
   };
@@ -1415,6 +1435,7 @@ function clearForm() {
   });
   document.getElementById('f-area').value='';
   document.getElementById('f-especie').value='';
+  document.getElementById('f-fecha-retiro').value='';
   attachedFiles=[];
   renderFileList();
   const today = new Date().toISOString().slice(0,10);
@@ -1607,6 +1628,7 @@ async function gsLoadAll() {
         codFundo:    obj['Codigo_Fundo']    || '',
         fundo:       obj['Nombre_Fundo']    || '',
         fecha:       obj['Fecha_Solicitud'] || '',
+        fecha_retiro:obj['Fecha_Retiro']    || '',
         status:      estadoToKey(obj['Estado'] || 'pendiente'),
         obs:         obj['Observaciones']   || '',
         razonRechazo:obj['Motivo_Rechazo']  || '',
@@ -1729,6 +1751,7 @@ submitForm = async function() {
     codFundo: document.getElementById('f-cod-fundo').value.trim(),
     fundo: document.getElementById('f-fundo').value.trim(),
     fecha: document.getElementById('f-fecha').value,
+    fecha_retiro: document.getElementById('f-fecha-retiro').value,
     status: 'pendiente',
     obs: document.getElementById('f-obs').value.trim(),
   };
@@ -1775,6 +1798,7 @@ async function init() {
   } else {
     showToast('⚠ Modo local — verifica que la hoja sea pública');
   }
+  renderKPIs();
   renderRecientes();
   renderAll();
   renderRechazados();
