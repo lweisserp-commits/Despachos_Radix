@@ -870,6 +870,7 @@
           <th>Cant.</th>
           <th>Área</th>
           <th>Fundo</th>
+          <th>F. Retiro</th>
           <th>Estado</th>
           <th>Acciones</th>
         </tr>
@@ -1165,6 +1166,7 @@ function renderRecientes() {
       <td><strong>${d.cantidad.toLocaleString()}</strong></td>
       <td>${areaBadge(d.area)}</td>
       <td>${d.fundo}</td>
+      <td style="color:var(--text3);font-size:11px">${d.fecha_retiro||'—'}</td>
       <td>${statusBadge(d.status)}</td>
       <td onclick="event.stopPropagation()"><button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="openModal('${d.id}')">Ver</button></td>
     </tr>`;
@@ -1208,15 +1210,44 @@ function renderRechazados() {
 // CHARTS
 // ═══════════════════════════════════════
 function initCharts() {
-  // Bar: por mes
-  new Chart(document.getElementById('chartMes'), {
+  // ── Bar: plantas por mes, agrupado por especie simplificada ──
+  const MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const mesNitens  = new Array(12).fill(0);
+  const mesGlobulus= new Array(12).fill(0);
+  const mesHibrido = new Array(12).fill(0);
+
+  DATA.forEach(d => {
+    const f = d.fecha || d.fecha_retiro || '';
+    if(!f || f.length < 7) return;
+    const mes = parseInt(f.slice(5,7)) - 1;
+    if(mes < 0 || mes > 11) return;
+    const cant = parseInt(d.cantidad) || 0;
+    const esp = (d.especie || '').toLowerCase();
+    if(esp.includes('nitens') && !esp.includes('×') && !esp.includes('x')) mesNitens[mes] += cant;
+    else if(esp.includes('globulus') && !esp.includes('×') && !esp.includes('x')) mesGlobulus[mes] += cant;
+    else mesHibrido[mes] += cant;
+  });
+
+  // Solo mostrar meses con datos
+  const maxMes = DATA.reduce((m, d) => {
+    const f = d.fecha || '';
+    if(f.length >= 7) { const mes = parseInt(f.slice(5,7))-1; return Math.max(m, mes); }
+    return m;
+  }, 5);
+  const labels = MESES.slice(0, maxMes + 1);
+
+  // Destruir chart anterior si existe
+  const canvasMes = document.getElementById('chartMes');
+  if(canvasMes._chart) canvasMes._chart.destroy();
+
+  const chartMes = new Chart(canvasMes, {
     type: 'bar',
     data: {
-      labels: ['Ene','Feb','Mar','Abr','May','Jun'],
+      labels,
       datasets: [
-        { label:'E. nitens', data:[18000,22000,30000,25000,19000,12000], backgroundColor:'#3a7d1e' },
-        { label:'E. globulus', data:[12000,15000,18000,20000,14000,8000], backgroundColor:'#8dc63f' },
-        { label:'Híbridos', data:[5000,8000,10000,12000,7000,3500], backgroundColor:'#c9a84c' },
+        { label:'E. nitens', data: mesNitens.slice(0, maxMes+1), backgroundColor:'#3a7d1e' },
+        { label:'E. globulus', data: mesGlobulus.slice(0, maxMes+1), backgroundColor:'#8dc63f' },
+        { label:'Híbridos', data: mesHibrido.slice(0, maxMes+1), backgroundColor:'#c9a84c' },
       ]
     },
     options: {
@@ -1228,11 +1259,16 @@ function initCharts() {
       }
     }
   });
+  canvasMes._chart = chartMes;
 
-  // Doughnut: por area
+  // ── Doughnut: por área ──
   const areaData = {};
-  DATA.forEach(d=>{ areaData[d.area]=(areaData[d.area]||0)+d.cantidad; });
-  new Chart(document.getElementById('chartArea'), {
+  DATA.forEach(d=>{ if(d.area) areaData[d.area]=(areaData[d.area]||0)+(parseInt(d.cantidad)||0); });
+
+  const canvasArea = document.getElementById('chartArea');
+  if(canvasArea._chart) canvasArea._chart.destroy();
+
+  const chartArea = new Chart(canvasArea, {
     type: 'doughnut',
     data: {
       labels: Object.keys(areaData),
@@ -1247,6 +1283,7 @@ function initCharts() {
       plugins:{ legend:{ position:'bottom', labels:{ font:{size:10}, padding:8, boxWidth:10 } } }
     }
   });
+  canvasArea._chart = chartArea;
 }
 
 // ═══════════════════════════════════════
@@ -1593,6 +1630,27 @@ function saveSheetURL() {
 }
 
 // ── LECTURA desde Google Sheets vía gviz (pública, sin auth) ──
+// Convierte cualquier formato de fecha gviz → "YYYY-MM-DD" o string original
+function parseGvizDate(val) {
+  if(val === null || val === undefined || val === '') return '';
+  // String "Date(2026,5,8)" — mes es 0-based en gviz
+  if(typeof val === 'string' && val.startsWith('Date(')) {
+    const parts = val.replace('Date(','').replace(')','').split(',').map(Number);
+    if(parts.length >= 3) {
+      const d = new Date(parts[0], parts[1], parts[2]);
+      return d.toISOString().slice(0,10);
+    }
+  }
+  // Objeto Date JS
+  if(val instanceof Date) return val.toISOString().slice(0,10);
+  // Número serial de Excel/Sheets (días desde 1899-12-30)
+  if(typeof val === 'number' && val > 1000) {
+    const d = new Date((val - 25569) * 86400 * 1000);
+    return d.toISOString().slice(0,10);
+  }
+  return String(val);
+}
+
 async function gsLoadAll() {
   try {
     const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}`;
@@ -1609,14 +1667,8 @@ async function gsLoadAll() {
       cols.forEach((col, i) => {
         const cell = row.c && row.c[i];
         let val = cell ? (cell.v !== null && cell.v !== undefined ? cell.v : '') : '';
-        // fechas vienen como "Date(2026,4,27)" → convertir
-        if(typeof val === 'object' && val !== null) val = '';
-        if(typeof cell?.v === 'object' && cell?.v !== null && cols[i].toLowerCase().includes('fecha')) {
-          try {
-            const d = new Date(cell.v);
-            val = d.toISOString().slice(0,10);
-          } catch(e) { val = ''; }
-        }
+        // gviz devuelve fechas como objeto Date JS o como string "Date(2026,4,8)"
+        val = parseGvizDate(val);
         obj[col] = String(val);
       });
       if(obj['Cantidad']) obj['Cantidad'] = parseInt(obj['Cantidad']) || 0;
