@@ -1,0 +1,1788 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Despachos — Radix Futuri · CMPC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cmpc-green: #3a7d1e;
+    --cmpc-lime: #8dc63f;
+    --radix-gold: #8b7535;
+    --radix-gold-light: #c9a84c;
+    --bg: #f4f6f0;
+    --surface: #ffffff;
+    --surface2: #f0f3eb;
+    --border: #d4dcc8;
+    --text: #1a2310;
+    --text2: #4a5c38;
+    --text3: #7a8f6a;
+    --accent: #3a7d1e;
+    --danger: #c0392b;
+    --warning: #e67e22;
+    --info: #2980b9;
+    --success: #27ae60;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+    --radius: 10px;
+    --radius-lg: 16px;
+  }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--surface);
+    border-bottom: 2px solid var(--cmpc-lime);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+
+  .header-logos {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .logo-cmpc {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-cmpc svg { width: 80px; height: 32px; }
+
+  .logo-divider {
+    width: 1px;
+    height: 32px;
+    background: var(--border);
+  }
+
+  .logo-radix {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-radix-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #5a4a1a, #c9a84c);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .logo-radix-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--radix-gold);
+    letter-spacing: 0.5px;
+  }
+
+  .header-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text2);
+    letter-spacing: 0.3px;
+  }
+
+  .header-nav {
+    display: flex;
+    gap: 4px;
+  }
+
+  .nav-btn {
+    padding: 7px 16px;
+    border: 1.5px solid transparent;
+    border-radius: var(--radius);
+    background: none;
+    cursor: pointer;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text3);
+    transition: all 0.18s;
+  }
+
+  .nav-btn:hover { background: var(--surface2); color: var(--text); }
+  .nav-btn.active {
+    background: var(--cmpc-green);
+    color: #fff;
+    border-color: var(--cmpc-green);
+  }
+
+  /* ── PAGES ── */
+  .page { display: none; padding: 2rem; max-width: 1200px; margin: 0 auto; }
+  .page.active { display: block; }
+
+  /* ── SECTION TITLES ── */
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .section-sub {
+    font-size: 13px;
+    color: var(--text3);
+  }
+
+  /* ── KPI CARDS ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 2rem;
+  }
+
+  .kpi-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 1.2rem 1.4rem;
+    border: 1.5px solid var(--border);
+    box-shadow: var(--shadow);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.18s, box-shadow 0.18s;
+  }
+
+  .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    border-radius: 3px 0 0 3px;
+  }
+
+  .kpi-card.green::before { background: var(--cmpc-green); }
+  .kpi-card.lime::before { background: var(--cmpc-lime); }
+  .kpi-card.gold::before { background: var(--radix-gold-light); }
+  .kpi-card.red::before { background: var(--danger); }
+  .kpi-card.blue::before { background: var(--info); }
+  .kpi-card.warn::before { background: var(--warning); }
+
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.1;
+  }
+
+  .kpi-meta {
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+  }
+
+  .kpi-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-top: 4px;
+  }
+
+  .badge-up { background: #e8f5e1; color: #2d7a0d; }
+  .badge-down { background: #fde8e8; color: #a32020; }
+  .badge-neutral { background: #fff3e0; color: #854f0b; }
+
+  /* ── CHARTS ROW ── */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 16px;
+    margin-bottom: 2rem;
+  }
+
+  .chart-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 1.4rem;
+    border: 1.5px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+
+  .chart-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .chart-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--cmpc-green);
+  }
+
+  /* ── TABLE ── */
+  .table-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1.5px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+
+  .table-header {
+    padding: 1rem 1.4rem;
+    border-bottom: 1.5px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--surface2);
+  }
+
+  .table-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text2);
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .filter-select, .search-input {
+    padding: 6px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    font-family: 'Sora', sans-serif;
+    font-size: 12px;
+    color: var(--text);
+    outline: none;
+  }
+
+  .filter-select:focus, .search-input:focus { border-color: var(--cmpc-green); }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead th {
+    background: var(--surface2);
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text3);
+    border-bottom: 1.5px solid var(--border);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid #eef0ea;
+    transition: background 0.12s;
+    cursor: pointer;
+  }
+
+  tbody tr:hover { background: #f8faf4; }
+  tbody tr:last-child { border-bottom: none; }
+
+  td {
+    padding: 11px 14px;
+    color: var(--text);
+  }
+
+  .ensayo-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    background: #eaf3de;
+    color: #3b6d11;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+
+  /* ── STATUS BADGES ── */
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+
+  .status.aprobado { background: #e8f5e1; color: #2d7a0d; }
+  .status.aprobado .status-dot { background: #27ae60; }
+
+  .status.pendiente { background: #fff8e1; color: #8a5a00; }
+  .status.pendiente .status-dot { background: #f39c12; }
+
+  .status.en_transito { background: #e3f0fb; color: #0d4f82; }
+  .status.en_transito .status-dot { background: #2980b9; }
+
+  .status.entregado { background: #e8f5e1; color: #1a5c0f; border: 1px solid #27ae60; }
+  .status.entregado .status-dot { background: #1a9641; }
+
+  .status.rechazado { background: #fde8e8; color: #8b1a1a; }
+  .status.rechazado .status-dot { background: #c0392b; }
+
+  .status.en_revision { background: #f3e8fb; color: #5a1a8b; }
+  .status.en_revision .status-dot { background: #8e44ad; }
+
+  /* ── FORM ── */
+  .form-card {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1.5px solid var(--border);
+    box-shadow: var(--shadow);
+    padding: 2rem;
+    max-width: 780px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  input[type=text], input[type=number], input[type=email], select, textarea {
+    padding: 9px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--surface);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input:focus, select:focus, textarea:focus { border-color: var(--cmpc-green); }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  .required-mark { color: #c0392b; margin-left: 2px; }
+
+  /* ── FILE UPLOAD ── */
+  .file-drop {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.18s;
+    background: var(--surface2);
+  }
+
+  .file-drop:hover, .file-drop.drag-over {
+    border-color: var(--cmpc-green);
+    background: #f0f8ea;
+  }
+
+  .file-drop-icon {
+    font-size: 32px;
+    margin-bottom: 8px;
+  }
+
+  .file-drop-text {
+    font-size: 13px;
+    color: var(--text3);
+  }
+
+  .file-drop-text strong { color: var(--cmpc-green); cursor: pointer; }
+
+  .file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+  }
+
+  .file-item-icon { color: var(--cmpc-green); }
+  .file-item-name { flex: 1; color: var(--text); }
+  .file-item-size { color: var(--text3); font-family: 'JetBrains Mono', monospace; }
+  .file-item-remove { cursor: pointer; color: var(--danger); padding: 2px 6px; border-radius: 4px; }
+  .file-item-remove:hover { background: #fde8e8; }
+
+  /* ── BUTTONS ── */
+  .btn {
+    padding: 10px 22px;
+    border-radius: var(--radius);
+    border: 1.5px solid transparent;
+    cursor: pointer;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.16s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn-primary {
+    background: var(--cmpc-green);
+    color: #fff;
+    border-color: var(--cmpc-green);
+  }
+  .btn-primary:hover { background: #2d6218; border-color: #2d6218; }
+
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--text2);
+    border-color: var(--border);
+  }
+  .btn-secondary:hover { background: var(--surface2); }
+
+  .btn-danger {
+    background: #fde8e8;
+    color: var(--danger);
+    border-color: #f5b7b7;
+  }
+  .btn-danger:hover { background: #f7c1c1; }
+
+  .btn-gold {
+    background: linear-gradient(135deg, #8b7535, #c9a84c);
+    color: #fff;
+    border-color: #8b7535;
+  }
+  .btn-gold:hover { opacity: 0.88; }
+
+  .form-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── MODAL (STATUS TRACKER) ── */
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .modal-backdrop.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    max-width: 560px;
+    width: 90%;
+    box-shadow: var(--shadow-md);
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 14px; right: 16px;
+    background: none; border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: var(--text3);
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+  .modal-close:hover { background: var(--surface2); }
+
+  .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .modal-sub { font-size: 12px; color: var(--text3); margin-bottom: 1.5rem; }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .detail-item { }
+  .detail-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text3);
+    margin-bottom: 2px;
+  }
+  .detail-value { font-size: 13px; font-weight: 500; color: var(--text); }
+
+  /* Timeline */
+  .timeline { position: relative; padding-left: 24px; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px; top: 8px; bottom: 8px;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .tl-item {
+    position: relative;
+    margin-bottom: 1rem;
+  }
+
+  .tl-item::before {
+    content: '';
+    position: absolute;
+    left: -20px; top: 4px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    z-index: 1;
+  }
+
+  .tl-item.done::before { background: var(--cmpc-green); border-color: var(--cmpc-green); }
+  .tl-item.active::before { background: var(--cmpc-lime); border-color: var(--cmpc-green); box-shadow: 0 0 0 3px rgba(141,198,63,0.25); }
+
+  .tl-label { font-size: 13px; font-weight: 600; color: var(--text); }
+  .tl-date { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+  /* ── RECHAZADOS ── */
+  .reject-card {
+    background: #fff9f9;
+    border: 1.5px solid #f7c1c1;
+    border-radius: var(--radius-lg);
+    padding: 1.2rem 1.4rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .reject-icon {
+    width: 36px; height: 36px;
+    background: #fde8e8;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--danger);
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .reject-ensayo { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #a32020; }
+  .reject-reason { font-size: 13px; color: var(--text); margin: 2px 0; font-weight: 500; }
+  .reject-meta { font-size: 11px; color: var(--text3); }
+
+  /* ── SEARCH STATUS PAGE ── */
+  .search-status-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+    max-width: 500px;
+  }
+
+  .search-status-bar input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'Sora', sans-serif;
+    font-size: 14px;
+    outline: none;
+  }
+
+  .search-status-bar input:focus { border-color: var(--cmpc-green); }
+
+  .status-result {
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1.5px solid var(--border);
+    padding: 1.8rem;
+    max-width: 560px;
+    box-shadow: var(--shadow);
+  }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    bottom: 2rem; right: 2rem;
+    background: var(--cmpc-green);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: var(--shadow-md);
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 320px;
+  }
+
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* ── AREA BADGES ── */
+  .area-tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .area-mejoram  { background: #f3e8fb; color: #5a1a8b; }
+  .area-manejo   { background: #e3f0fb; color: #0d4f82; }
+  .area-operac   { background: #fff3e0; color: #854f0b; }
+  .area-otros    { background: #f0f3eb; color: #4a5c38; }
+
+  /* ── LEGEND ── */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-color { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 700px) {
+    .charts-row { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .detail-grid { grid-template-columns: 1fr; }
+    header { padding: 0 1rem; }
+    .page { padding: 1rem; }
+    .header-title { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-logos">
+    <!-- CMPC Logo SVG -->
+    <div class="logo-cmpc">
+      <svg viewBox="0 0 120 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <text x="2" y="38" font-family="Arial" font-size="36" font-weight="300" fill="#888">cmpc</text>
+        <ellipse cx="106" cy="14" rx="7" ry="10" fill="#3a7d1e" transform="rotate(-20 106 14)"/>
+        <ellipse cx="114" cy="12" rx="7" ry="10" fill="#8dc63f" transform="rotate(15 114 12)"/>
+      </svg>
+    </div>
+    <div class="logo-divider"></div>
+    <div class="logo-radix">
+      <div class="logo-radix-icon">RF</div>
+      <div>
+        <div class="logo-radix-text">RADIX FUTURI</div>
+        <div style="font-size:10px;color:var(--text3);">I+D Propagación · CMPC Forestal</div>
+      </div>
+    </div>
+  </div>
+  <div class="header-title">Sistema de Gestión de Despachos</div>
+  <div id="conn-status" style="margin-right:8px"></div>
+  <div class="header-nav">
+    <button class="nav-btn active" onclick="showPage('dashboard',this)">Dashboard</button>
+    <button class="nav-btn" onclick="showPage('despachos',this)">Despachos</button>
+    <button class="nav-btn" onclick="showPage('solicitud',this)">Nueva Solicitud</button>
+    <button class="nav-btn" onclick="showPage('estado',this)">Consultar Estado</button>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════
+     PAGE: DASHBOARD
+════════════════════════════════════════ -->
+<div id="page-dashboard" class="page active">
+
+  <div class="section-header">
+    <div class="section-title">Dashboard General</div>
+    <div class="section-sub">Temporada 2025–2026 · Vivero Carlos Douglas, Yumbel</div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card green">
+      <div class="kpi-label">Total Despachado</div>
+      <div class="kpi-value">284,500</div>
+      <div class="kpi-meta">plantas enviadas</div>
+      <span class="kpi-badge badge-up">↑ +12% vs 2025</span>
+    </div>
+    <div class="kpi-card lime">
+      <div class="kpi-label">Nº Despachos</div>
+      <div class="kpi-value">47</div>
+      <div class="kpi-meta">órdenes procesadas</div>
+      <span class="kpi-badge badge-up">↑ +8 vs 2025</span>
+    </div>
+    <div class="kpi-card gold">
+      <div class="kpi-label">Cumplimiento</div>
+      <div class="kpi-value">91.5%</div>
+      <div class="kpi-meta">despachos a tiempo</div>
+      <span class="kpi-badge badge-neutral">Meta: 95%</span>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">En Tránsito</div>
+      <div class="kpi-value">3</div>
+      <div class="kpi-meta">despachos activos</div>
+    </div>
+    <div class="kpi-card warn">
+      <div class="kpi-label">Pendientes</div>
+      <div class="kpi-value">6</div>
+      <div class="kpi-meta">solicitudes en espera</div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-label">Rechazados</div>
+      <div class="kpi-value">4</div>
+      <div class="kpi-meta">solicitudes rechazadas</div>
+      <span class="kpi-badge badge-down">↑ +2 vs 2025</span>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="charts-row">
+    <!-- Bar Chart: Despachos por mes -->
+    <div class="chart-card">
+      <div class="chart-title"><span class="chart-dot"></span> Plantas despachadas por mes (2026)</div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-color" style="background:#3a7d1e;"></div>E. nitens</div>
+        <div class="legend-item"><div class="legend-color" style="background:#8dc63f;"></div>E. globulus</div>
+        <div class="legend-item"><div class="legend-color" style="background:#c9a84c;"></div>Híbridos</div>
+      </div>
+      <div style="position:relative;height:220px;">
+        <canvas id="chartMes" role="img" aria-label="Plantas despachadas por mes">Gráfico de despachos mensuales.</canvas>
+      </div>
+    </div>
+    <!-- Doughnut: Por área -->
+    <div class="chart-card">
+      <div class="chart-title"><span class="chart-dot" style="background:var(--radix-gold-light)"></span> Despachos por área solicitante</div>
+      <div style="position:relative;height:220px;">
+        <canvas id="chartArea" role="img" aria-label="Despachos por área">Gráfico de torta por área.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rechazados -->
+  <div class="section-header">
+    <div class="section-title" style="font-size:16px">Solicitudes Rechazadas</div>
+    <div class="section-sub">Último mes</div>
+  </div>
+
+  <div id="reject-list">
+    <!-- populated by JS -->
+  </div>
+
+  <!-- Últimos despachos -->
+  <div class="section-header" style="margin-top:2rem">
+    <div class="section-title" style="font-size:16px">Últimos despachos</div>
+    <button class="btn btn-secondary" onclick="showPage('despachos',document.querySelectorAll('.nav-btn')[1])" style="margin-left:auto;font-size:12px;padding:6px 14px;">Ver todos →</button>
+  </div>
+
+  <div class="table-card">
+    <table id="table-recientes">
+      <thead>
+        <tr>
+          <th>Ensayo</th>
+          <th>Solicitante</th>
+          <th>Especie / Genotipo</th>
+          <th>Cant.</th>
+          <th>Área</th>
+          <th>Fundo</th>
+          <th>Estado</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-recientes"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: DESPACHOS (tabla completa)
+════════════════════════════════════════ -->
+<div id="page-despachos" class="page">
+
+  <div class="section-header">
+    <div class="section-title">Registro de Despachos</div>
+    <div class="section-sub">Todos los registros de la temporada</div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <div class="table-title">Despachos 2025–2026</div>
+      <div class="filter-row">
+        <input type="text" class="search-input" placeholder="🔍 Buscar ensayo o solicitante..." id="search-input" oninput="filterTable()" style="width:220px;">
+        <select class="filter-select" id="filter-status" onchange="filterTable()">
+          <option value="">Todos los estados</option>
+          <option value="aprobado">Aprobado</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="en_transito">En tránsito</option>
+          <option value="entregado">Entregado</option>
+          <option value="rechazado">Rechazado</option>
+          <option value="en_revision">En revisión</option>
+        </select>
+        <select class="filter-select" id="filter-area" onchange="filterTable()">
+          <option value="">Todas las áreas</option>
+          <option value="Mejoramiento">Mejoramiento</option>
+          <option value="Manejo">Manejo</option>
+          <option value="Operacional">Operacional</option>
+          <option value="Otros">Otros</option>
+        </select>
+        <button class="btn btn-gold" style="font-size:12px;padding:6px 14px;" onclick="exportCSV()">⬇ Exportar CSV</button>
+      </div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Nº Ensayo</th>
+          <th>Solicitante</th>
+          <th>Especie</th>
+          <th>Genotipo</th>
+          <th>Cantidad</th>
+          <th>Área</th>
+          <th>Cód. Fundo</th>
+          <th>Fundo</th>
+          <th>Retira</th>
+          <th>Fecha Solicitud</th>
+          <th>Estado</th>
+          <th>Ver</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-all"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: NUEVA SOLICITUD
+════════════════════════════════════════ -->
+<div id="page-solicitud" class="page">
+
+  <div class="section-header">
+    <div class="section-title">Nueva Solicitud de Despacho</div>
+    <div class="section-sub">Complete todos los campos obligatorios (*)</div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Nº Ensayo <span class="required-mark">*</span></label>
+        <input type="text" id="f-ensayo" placeholder="Ej: ENS-2026-001" oninput="autoEnsayo(this)">
+      </div>
+      <div class="form-group">
+        <label>Fecha de Solicitud</label>
+        <input type="text" id="f-fecha" readonly style="background:var(--surface2);color:var(--text3);">
+      </div>
+      <div class="form-group">
+        <label>Nombre del Solicitante <span class="required-mark">*</span></label>
+        <input type="text" id="f-solicitante" placeholder="Nombre completo">
+      </div>
+      <div class="form-group">
+        <label>Área Solicitante <span class="required-mark">*</span></label>
+        <select id="f-area">
+          <option value="">Seleccionar área…</option>
+          <option>Mejoramiento</option>
+          <option>Manejo</option>
+          <option>Operacional</option>
+          <option>Otros</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Especie <span class="required-mark">*</span></label>
+        <select id="f-especie">
+          <option value="">Seleccionar…</option>
+          <option>E. nitens</option>
+          <option>E. globulus</option>
+          <option>E. nitens × globulus</option>
+          <option>E. globulus × nitens</option>
+          <option>Otro híbrido</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Genotipo / Clon <span class="required-mark">*</span></label>
+        <input type="text" id="f-genotipo" placeholder="Ej: T16993, 1407, 3013…">
+      </div>
+      <div class="form-group">
+        <label>Cantidad de Plantas <span class="required-mark">*</span></label>
+        <input type="number" id="f-cantidad" placeholder="Nº de plantas" min="1">
+      </div>
+      <div class="form-group">
+        <label>Quien Retira <span class="required-mark">*</span></label>
+        <input type="text" id="f-retira" placeholder="Nombre del responsable de retiro">
+      </div>
+      <div class="form-group">
+        <label>Código de Fundo <span class="required-mark">*</span></label>
+        <input type="text" id="f-cod-fundo" placeholder="Ej: FND-2345">
+      </div>
+      <div class="form-group">
+        <label>Nombre del Fundo <span class="required-mark">*</span></label>
+        <input type="text" id="f-fundo" placeholder="Nombre del predio destino">
+      </div>
+      <div class="form-group full">
+        <label>Observaciones / Instrucciones especiales</label>
+        <textarea id="f-obs" placeholder="Condiciones de transporte, etiquetado especial, urgencia…"></textarea>
+      </div>
+      <div class="form-group full">
+        <label>Archivos adjuntos (fotos, PDF, protocolos)</label>
+        <div class="file-drop" id="file-drop" onclick="document.getElementById('file-input').click()" 
+             ondragover="event.preventDefault();this.classList.add('drag-over')"
+             ondragleave="this.classList.remove('drag-over')"
+             ondrop="handleDrop(event)">
+          <div class="file-drop-icon">📎</div>
+          <div class="file-drop-text">Arrastra archivos aquí o <strong>haz clic para seleccionar</strong></div>
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;">JPG, PNG, PDF — máx. 10 MB por archivo</div>
+        </div>
+        <input type="file" id="file-input" multiple accept=".jpg,.jpeg,.png,.pdf" style="display:none" onchange="handleFiles(this.files)">
+        <div class="file-list" id="file-list"></div>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" onclick="submitForm()">✓ Enviar Solicitud</button>
+      <button class="btn btn-secondary" onclick="downloadForm()">⬇ Descargar como texto</button>
+      <button class="btn btn-secondary" onclick="clearForm()">✕ Limpiar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     PAGE: CONSULTAR ESTADO
+════════════════════════════════════════ -->
+<div id="page-estado" class="page">
+
+  <div class="section-header">
+    <div class="section-title">Consultar Estado de Pedido</div>
+    <div class="section-sub">Ingresa el número de ensayo para ver el estado actual de tu despacho</div>
+  </div>
+
+  <div class="search-status-bar">
+    <input type="text" id="estado-search" placeholder="Ej: ENS-2026-007" oninput="buscarEstado()">
+    <button class="btn btn-primary" onclick="buscarEstado()">Consultar</button>
+  </div>
+
+  <div id="estado-result"></div>
+
+</div>
+
+<!-- ── MODAL ── -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="closeModal(event)">
+  <div class="modal" id="modal-body">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════
+const DATA = [
+  { id:'ENS-2026-001', solicitante:'Verónica Emhart', area:'Mejoramiento', especie:'E. nitens', genotipo:'T16993', cantidad:5000, retira:'Pablo Rojas', codFundo:'FND-1023', fundo:'El Ciprés', fecha:'2026-02-10', status:'entregado', obs:'Sin observaciones.' },
+  { id:'ENS-2026-002', solicitante:'Antonio Weisser', area:'Manejo', especie:'E. globulus', genotipo:'1407', cantidad:3200, retira:'María Castro', codFundo:'FND-2345', fundo:'Los Pinos', fecha:'2026-02-18', status:'entregado', obs:'Embalaje especial para transporte.' },
+  { id:'ENS-2026-003', solicitante:'Janet Burgos', area:'Operacional', especie:'E. nitens', genotipo:'T16527', cantidad:1500, retira:'Kevin Opazo', codFundo:'FND-0891', fundo:'San Gregorio', fecha:'2026-03-05', status:'entregado', obs:'Control fitosanitario previo.' },
+  { id:'ENS-2026-004', solicitante:'Roxana Illanes', area:'Otros', especie:'E. globulus × nitens', genotipo:'3013', cantidad:8000, retira:'José Carrasco', codFundo:'FND-3310', fundo:'Campo Lindo', fecha:'2026-03-14', status:'aprobado', obs:'Destino: operaciones Brasil.' },
+  { id:'ENS-2026-005', solicitante:'Kevin Opazo', area:'Mejoramiento', especie:'E. nitens', genotipo:'T16993', cantidad:2000, retira:'Ludwig Weisser', codFundo:'FND-0100', fundo:'Vivero VCD', fecha:'2026-03-22', status:'en_transito', obs:'Material de ensayo Horizon.' },
+  { id:'ENS-2026-006', solicitante:'Verónica Emhart', area:'Mejoramiento', especie:'E. nitens × globulus', genotipo:'T16527', cantidad:4500, retira:'Pablo Rojas', codFundo:'FND-1023', fundo:'El Ciprés', fecha:'2026-04-03', status:'pendiente', obs:'Pendiente aprobación de calidad.' },
+  { id:'ENS-2026-007', solicitante:'Antonio Weisser', area:'Manejo', especie:'E. globulus', genotipo:'3013', cantidad:1200, retira:'Ana López', codFundo:'FND-4521', fundo:'Rancho Norte', fecha:'2026-04-10', status:'en_revision', obs:'Revisar estado fitosanitario.' },
+  { id:'ENS-2026-008', solicitante:'Janet Burgos', area:'Operacional', especie:'E. nitens', genotipo:'T16993', cantidad:900, retira:'Felipe Muñoz', codFundo:'FND-0765', fundo:'La Araucaria', fecha:'2026-04-15', status:'rechazado', obs:'Material con síntomas de marchitez.', razonRechazo:'Calidad fitosanitaria no cumple estándar. Se detectó sintomatología de Phytophthora en 18% de la muestra.' },
+  { id:'ENS-2026-009', solicitante:'Roxana Illanes', area:'Otros', especie:'E. globulus', genotipo:'1407', cantidad:6000, retira:'Jorge Díaz', codFundo:'FND-3310', fundo:'Campo Lindo', fecha:'2026-04-20', status:'rechazado', obs:'Documentación incompleta.', razonRechazo:'Guía de despacho sin firma de jefatura. Reenviar con formulario completo.' },
+  { id:'ENS-2026-010', solicitante:'Kevin Opazo', area:'Operacional', especie:'E. nitens', genotipo:'T16993', cantidad:12000, retira:'Ludwig Weisser', codFundo:'FND-0100', fundo:'Vivero VCD', fecha:'2026-04-28', status:'en_transito', obs:'Lote de contingencia.' },
+  { id:'ENS-2026-011', solicitante:'Antonio Weisser', area:'Manejo', especie:'E. globulus', genotipo:'3013', cantidad:3800, retira:'María Castro', codFundo:'FND-2345', fundo:'Los Pinos', fecha:'2026-05-05', status:'aprobado', obs:'Disponible desde el 8 de mayo.' },
+  { id:'ENS-2026-012', solicitante:'Janet Burgos', area:'Operacional', especie:'E. nitens × globulus', genotipo:'T16527', cantidad:2100, retira:'Kevin Opazo', codFundo:'FND-0891', fundo:'San Gregorio', fecha:'2026-05-12', status:'pendiente', obs:'En espera de ensayo de arraigamiento.' },
+  { id:'ENS-2026-013', solicitante:'Ludwig Weisser', area:'Mejoramiento', especie:'E. nitens', genotipo:'T16993', cantidad:500, retira:'Ludwig Weisser', codFundo:'FND-0100', fundo:'Vivero VCD', fecha:'2026-05-20', status:'en_revision', obs:'Material ensayo T1 Radix Futuri.' },
+  { id:'ENS-2026-014', solicitante:'Verónica Emhart', area:'Mejoramiento', especie:'E. globulus × nitens', genotipo:'1407', cantidad:7500, retira:'Pablo Rojas', codFundo:'FND-1023', fundo:'El Ciprés', fecha:'2026-05-22', status:'pendiente', obs:'Liberación prevista junio.' },
+  { id:'ENS-2026-015', solicitante:'Roxana Illanes', area:'Otros', especie:'E. globulus', genotipo:'3013', cantidad:200, retira:'José Carrasco', codFundo:'FND-5500', fundo:'Fundo Brasil Sto. André', fecha:'2026-05-25', status:'rechazado', obs:'', razonRechazo:'Cupo de exportación superado para el período. Reprogramar para julio 2026.' },
+];
+
+const AREA_COLORS = {
+  'Mejoramiento':'area-mejoram','Manejo':'area-manejo',
+  'Operacional':'area-operac','Otros':'area-otros'
+};
+
+const STATUS_LABELS = {
+  'aprobado':'Aprobado','pendiente':'Pendiente','en_transito':'En tránsito',
+  'entregado':'Entregado','rechazado':'Rechazado','en_revision':'En revisión'
+};
+
+function statusBadge(s) {
+  return `<span class="status ${s}"><span class="status-dot"></span>${STATUS_LABELS[s]||s}</span>`;
+}
+
+function areaBadge(a) {
+  return `<span class="area-tag ${AREA_COLORS[a]||'area-vivero'}">${a}</span>`;
+}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(btn) btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════
+// RENDER TABLES
+// ═══════════════════════════════════════
+function renderRow(d, actions=true) {
+  const act = actions
+    ? `<button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="openModal('${d.id}')">Ver</button>`
+    : '';
+  return `<tr onclick="openModal('${d.id}')">
+    <td><span class="ensayo-tag">${d.id}</span></td>
+    <td>${d.solicitante}</td>
+    <td style="font-style:italic">${d.especie}</td>
+    <td><code style="font-size:11px;font-family:'JetBrains Mono',monospace">${d.genotipo}</code></td>
+    <td><strong>${d.cantidad.toLocaleString()}</strong></td>
+    <td>${areaBadge(d.area)}</td>
+    <td><code style="font-size:11px;font-family:'JetBrains Mono',monospace">${d.codFundo}</code></td>
+    <td>${d.fundo}</td>
+    <td>${d.retira}</td>
+    <td style="color:var(--text3);font-size:11px">${d.fecha}</td>
+    <td>${statusBadge(d.status)}</td>
+    <td onclick="event.stopPropagation()">${act}</td>
+  </tr>`;
+}
+
+function renderRecientes() {
+  const recent = [...DATA].sort((a,b)=>b.fecha.localeCompare(a.fecha)).slice(0,6);
+  document.getElementById('tbody-recientes').innerHTML = recent.map(d => {
+    return `<tr onclick="openModal('${d.id}')">
+      <td><span class="ensayo-tag">${d.id}</span></td>
+      <td>${d.solicitante}</td>
+      <td style="font-style:italic">${d.especie} <code style="font-size:10px;font-family:'JetBrains Mono',monospace;margin-left:4px">${d.genotipo}</code></td>
+      <td><strong>${d.cantidad.toLocaleString()}</strong></td>
+      <td>${areaBadge(d.area)}</td>
+      <td>${d.fundo}</td>
+      <td>${statusBadge(d.status)}</td>
+      <td onclick="event.stopPropagation()"><button class="btn btn-secondary" style="font-size:11px;padding:4px 10px" onclick="openModal('${d.id}')">Ver</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAll() {
+  document.getElementById('tbody-all').innerHTML = DATA.map(d=>renderRow(d)).join('');
+}
+
+function filterTable() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const st = document.getElementById('filter-status').value;
+  const ar = document.getElementById('filter-area').value;
+  const filtered = DATA.filter(d => {
+    const matchQ = !q || d.id.toLowerCase().includes(q) || d.solicitante.toLowerCase().includes(q) || d.genotipo.toLowerCase().includes(q);
+    const matchSt = !st || d.status === st;
+    const matchAr = !ar || d.area === ar;
+    return matchQ && matchSt && matchAr;
+  });
+  document.getElementById('tbody-all').innerHTML = filtered.map(d=>renderRow(d)).join('');
+}
+
+// ═══════════════════════════════════════
+// RECHAZADOS
+// ═══════════════════════════════════════
+function renderRechazados() {
+  const r = DATA.filter(d=>d.status==='rechazado');
+  document.getElementById('reject-list').innerHTML = r.map(d=>`
+    <div class="reject-card">
+      <div class="reject-icon">✕</div>
+      <div>
+        <div class="reject-ensayo">${d.id}</div>
+        <div class="reject-reason">${d.razonRechazo||'Sin detalle de rechazo.'}</div>
+        <div class="reject-meta">${d.solicitante} · ${d.area} · ${d.fecha} · ${d.cantidad.toLocaleString()} plantas</div>
+      </div>
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════
+// CHARTS
+// ═══════════════════════════════════════
+function initCharts() {
+  // Bar: por mes
+  new Chart(document.getElementById('chartMes'), {
+    type: 'bar',
+    data: {
+      labels: ['Ene','Feb','Mar','Abr','May','Jun'],
+      datasets: [
+        { label:'E. nitens', data:[18000,22000,30000,25000,19000,12000], backgroundColor:'#3a7d1e' },
+        { label:'E. globulus', data:[12000,15000,18000,20000,14000,8000], backgroundColor:'#8dc63f' },
+        { label:'Híbridos', data:[5000,8000,10000,12000,7000,3500], backgroundColor:'#c9a84c' },
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ stacked:true, ticks:{font:{size:11}} },
+        y:{ stacked:true, ticks:{font:{size:11}, callback:v=>v>=1000?(v/1000)+'k':v} }
+      }
+    }
+  });
+
+  // Doughnut: por area
+  const areaData = {};
+  DATA.forEach(d=>{ areaData[d.area]=(areaData[d.area]||0)+d.cantidad; });
+  new Chart(document.getElementById('chartArea'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(areaData),
+      datasets: [{
+        data: Object.values(areaData),
+        backgroundColor: ['#8e44ad','#2980b9','#e67e22','#4a5c38'],
+        borderWidth: 2, borderColor: '#fff'
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ font:{size:10}, padding:8, boxWidth:10 } } }
+    }
+  });
+}
+
+// ═══════════════════════════════════════
+// MODAL DETAIL
+// ═══════════════════════════════════════
+function openModal(id) {
+  const d = DATA.find(x=>x.id===id);
+  if(!d) return;
+
+  const steps = [
+    { label:'Solicitud recibida', date: d.fecha, done:true },
+    { label:'Revisión técnica', date: addDays(d.fecha,2), done: ['aprobado','en_transito','entregado','rechazado','en_revision'].includes(d.status) },
+    { label:'Aprobación de jefatura', date: addDays(d.fecha,4), done: ['aprobado','en_transito','entregado'].includes(d.status), active: d.status==='en_revision' },
+    { label:'Preparación de lote', date: addDays(d.fecha,6), done: ['en_transito','entregado'].includes(d.status), active: d.status==='aprobado' },
+    { label:'En tránsito', date: addDays(d.fecha,8), done: d.status==='entregado', active: d.status==='en_transito' },
+    { label:'Entregado en fundo', date: addDays(d.fecha,10), done: d.status==='entregado' },
+  ];
+
+  const tl = steps.map(s=>`
+    <div class="tl-item ${s.done?'done':''} ${s.active?'active':''}">
+      <div class="tl-label">${s.label}</div>
+      <div class="tl-date">${s.done||s.active?s.date:'Pendiente'}</div>
+    </div>`).join('');
+
+  const rejectBlock = d.status==='rechazado'
+    ? `<div style="background:#fff9f9;border:1.5px solid #f7c1c1;border-radius:8px;padding:12px;margin-bottom:1rem">
+        <div style="font-size:11px;font-weight:600;color:#a32020;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">Motivo de rechazo</div>
+        <div style="font-size:13px;color:var(--text)">${d.razonRechazo||'Sin detalle.'}</div>
+       </div>` : '';
+
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">${d.id}</div>
+    <div class="modal-sub">${d.especie} · Genotipo: ${d.genotipo} · ${statusBadge(d.status)}</div>
+    ${rejectBlock}
+    <div class="detail-grid">
+      <div class="detail-item"><div class="detail-label">Solicitante</div><div class="detail-value">${d.solicitante}</div></div>
+      <div class="detail-item"><div class="detail-label">Área</div><div class="detail-value">${d.area}</div></div>
+      <div class="detail-item"><div class="detail-label">Cantidad</div><div class="detail-value">${d.cantidad.toLocaleString()} plantas</div></div>
+      <div class="detail-item"><div class="detail-label">Quien retira</div><div class="detail-value">${d.retira}</div></div>
+      <div class="detail-item"><div class="detail-label">Cód. Fundo</div><div class="detail-value" style="font-family:'JetBrains Mono',monospace">${d.codFundo}</div></div>
+      <div class="detail-item"><div class="detail-label">Nombre Fundo</div><div class="detail-value">${d.fundo}</div></div>
+      <div class="detail-item"><div class="detail-label">Fecha Solicitud</div><div class="detail-value">${d.fecha}</div></div>
+      <div class="detail-item"><div class="detail-label">Observaciones</div><div class="detail-value">${d.obs||'—'}</div></div>
+    </div>
+    <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px">Seguimiento del despacho</div>
+    <div class="timeline">${tl}</div>
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border);display:flex;gap:8px">
+      <button class="btn btn-primary" style="font-size:12px" onclick="downloadDetail('${d.id}')">⬇ Descargar ficha</button>
+      <button class="btn btn-secondary" style="font-size:12px" onclick="closeModal()">Cerrar</button>
+    </div>`;
+
+  document.getElementById('modal-backdrop').classList.add('open');
+}
+
+function addDays(dateStr, n) {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate()+n);
+  return d.toISOString().slice(0,10);
+}
+
+function closeModal(e) {
+  if(!e || e.target===document.getElementById('modal-backdrop'))
+    document.getElementById('modal-backdrop').classList.remove('open');
+}
+
+// ═══════════════════════════════════════
+// ESTADO SEARCH
+// ═══════════════════════════════════════
+function buscarEstado() {
+  const q = document.getElementById('estado-search').value.trim().toUpperCase();
+  const el = document.getElementById('estado-result');
+  if(!q) { el.innerHTML=''; return; }
+
+  const d = DATA.find(x=>x.id===q || x.id.toUpperCase().includes(q));
+  if(!d) {
+    el.innerHTML=`<div style="color:var(--text3);font-size:14px;padding:1rem 0">No se encontró ningún despacho con ese número de ensayo. Verifica el formato (Ej: ENS-2026-007).</div>`;
+    return;
+  }
+
+  const steps = [
+    {label:'Solicitud recibida',done:true},
+    {label:'Revisión técnica',done:['aprobado','en_transito','entregado','rechazado','en_revision'].includes(d.status)},
+    {label:'Aprobación',done:['aprobado','en_transito','entregado'].includes(d.status),active:d.status==='en_revision'},
+    {label:'Preparación',done:['en_transito','entregado'].includes(d.status),active:d.status==='aprobado'},
+    {label:'En tránsito',done:d.status==='entregado',active:d.status==='en_transito'},
+    {label:'Entregado',done:d.status==='entregado'},
+  ];
+  const tl = steps.map(s=>`<div class="tl-item ${s.done?'done':''} ${s.active?'active':''}">
+    <div class="tl-label">${s.label}</div></div>`).join('');
+
+  el.innerHTML=`<div class="status-result">
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:4px">
+      <span style="font-size:16px;font-weight:700;color:var(--text)">${d.id}</span>
+      ${statusBadge(d.status)}
+    </div>
+    <div style="font-size:13px;color:var(--text3);margin-bottom:1.2rem">${d.especie} · ${d.genotipo} · ${d.cantidad.toLocaleString()} plantas</div>
+    ${d.status==='rechazado'?`<div style="background:#fff9f9;border:1.5px solid #f7c1c1;border-radius:8px;padding:10px;margin-bottom:1rem;font-size:13px"><strong style="color:#a32020">Rechazado:</strong> ${d.razonRechazo||'Ver detalle.'}</div>`:''}
+    <div class="timeline">${tl}</div>
+    <div style="margin-top:1.2rem;font-size:12px;color:var(--text3)">Solicitante: ${d.solicitante} · Área: ${d.area} · Fundo: ${d.fundo}</div>
+    <div style="margin-top:1rem"><button class="btn btn-secondary" style="font-size:12px" onclick="openModal('${d.id}')">Ver ficha completa →</button></div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════
+// FORM
+// ═══════════════════════════════════════
+let attachedFiles = [];
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('f-fecha').value = today;
+});
+
+function autoEnsayo(el) {
+  if(el.value && !el.value.startsWith('ENS-')) {
+    // let user type freely
+  }
+}
+
+function handleFiles(files) {
+  Array.from(files).forEach(f=>{
+    if(f.size > 10*1024*1024) { showToast('⚠ Archivo demasiado grande: '+f.name); return; }
+    attachedFiles.push(f);
+  });
+  renderFileList();
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('file-drop').classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+}
+
+function renderFileList() {
+  const el = document.getElementById('file-list');
+  el.innerHTML = attachedFiles.map((f,i)=>`
+    <div class="file-item">
+      <span class="file-item-icon">${f.type.includes('pdf')?'📄':'🖼'}</span>
+      <span class="file-item-name">${f.name}</span>
+      <span class="file-item-size">${(f.size/1024).toFixed(0)} KB</span>
+      <span class="file-item-remove" onclick="removeFile(${i})">✕</span>
+    </div>`).join('');
+}
+
+function removeFile(i) {
+  attachedFiles.splice(i,1);
+  renderFileList();
+}
+
+function submitForm() {
+  const required = ['f-ensayo','f-solicitante','f-area','f-especie','f-genotipo','f-cantidad','f-retira','f-cod-fundo','f-fundo'];
+  let ok = true;
+  required.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el.value.trim()) { el.style.borderColor='#c0392b'; ok=false; }
+    else el.style.borderColor='';
+  });
+  if(!ok) { showToast('⚠ Completa todos los campos obligatorios'); return; }
+
+  const newEntry = {
+    id: document.getElementById('f-ensayo').value.trim(),
+    solicitante: document.getElementById('f-solicitante').value.trim(),
+    area: document.getElementById('f-area').value,
+    especie: document.getElementById('f-especie').value,
+    genotipo: document.getElementById('f-genotipo').value.trim(),
+    cantidad: parseInt(document.getElementById('f-cantidad').value)||0,
+    retira: document.getElementById('f-retira').value.trim(),
+    codFundo: document.getElementById('f-cod-fundo').value.trim(),
+    fundo: document.getElementById('f-fundo').value.trim(),
+    fecha: document.getElementById('f-fecha').value,
+    status: 'pendiente',
+    obs: document.getElementById('f-obs').value.trim(),
+  };
+
+  DATA.unshift(newEntry);
+  renderAll();
+  renderRecientes();
+  clearForm();
+  showToast('✓ Solicitud '+newEntry.id+' enviada correctamente');
+  showPage('despachos', document.querySelectorAll('.nav-btn')[1]);
+}
+
+function clearForm() {
+  ['f-ensayo','f-solicitante','f-genotipo','f-cantidad','f-retira','f-cod-fundo','f-fundo','f-obs'].forEach(id=>{
+    document.getElementById(id).value='';
+    document.getElementById(id).style.borderColor='';
+  });
+  document.getElementById('f-area').value='';
+  document.getElementById('f-especie').value='';
+  attachedFiles=[];
+  renderFileList();
+  const today = new Date().toISOString().slice(0,10);
+  document.getElementById('f-fecha').value=today;
+}
+
+function downloadForm() {
+  const vals = {
+    'Nº Ensayo': document.getElementById('f-ensayo').value,
+    'Fecha': document.getElementById('f-fecha').value,
+    'Solicitante': document.getElementById('f-solicitante').value,
+    'Área': document.getElementById('f-area').value,
+    'Especie': document.getElementById('f-especie').value,
+    'Genotipo': document.getElementById('f-genotipo').value,
+    'Cantidad': document.getElementById('f-cantidad').value,
+    'Quien Retira': document.getElementById('f-retira').value,
+    'Cód. Fundo': document.getElementById('f-cod-fundo').value,
+    'Nombre Fundo': document.getElementById('f-fundo').value,
+    'Observaciones': document.getElementById('f-obs').value,
+  };
+  const txt = '=== SOLICITUD DE DESPACHO — RADIX FUTURI / CMPC FORESTAL ===\n\n' +
+    Object.entries(vals).map(([k,v])=>`${k}: ${v||'—'}`).join('\n') +
+    (attachedFiles.length ? '\n\nArchivos adjuntos:\n'+attachedFiles.map(f=>'  - '+f.name).join('\n') : '');
+  const blob = new Blob([txt],{type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (vals['Nº Ensayo']||'solicitud')+'_despacho.txt';
+  a.click();
+}
+
+function downloadDetail(id) {
+  const d = DATA.find(x=>x.id===id);
+  if(!d) return;
+  const txt = `=== FICHA DE DESPACHO — RADIX FUTURI / CMPC FORESTAL ===
+
+Nº Ensayo:       ${d.id}
+Estado:          ${STATUS_LABELS[d.status]||d.status}
+Solicitante:     ${d.solicitante}
+Área:            ${d.area}
+Especie:         ${d.especie}
+Genotipo:        ${d.genotipo}
+Cantidad:        ${d.cantidad.toLocaleString()} plantas
+Quien Retira:    ${d.retira}
+Cód. Fundo:      ${d.codFundo}
+Nombre Fundo:    ${d.fundo}
+Fecha Solicitud: ${d.fecha}
+Observaciones:   ${d.obs||'—'}
+${d.razonRechazo?'\nMotivo Rechazo:\n'+d.razonRechazo:''}
+
+--- Generado por Sistema Despachos Radix Futuri / CMPC Forestal ---`;
+  const blob = new Blob([txt],{type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = d.id+'_ficha.txt';
+  a.click();
+}
+
+function exportCSV() {
+  const cols = ['id','solicitante','area','especie','genotipo','cantidad','retira','codFundo','fundo','fecha','status'];
+  const header = ['Ensayo','Solicitante','Área','Especie','Genotipo','Cantidad','Retira','Cód.Fundo','Fundo','Fecha','Estado'];
+  const rows = DATA.map(d=>cols.map(c=>`"${d[c]||''}"`).join(','));
+  const csv = [header.join(','),...rows].join('\n');
+  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'despachos_radix_futuri.csv';
+  a.click();
+  showToast('✓ CSV exportado');
+}
+
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+// ═══════════════════════════════════════
+// GOOGLE SHEETS PERSISTENCE
+// Lectura: API pública gviz (sin auth)
+// Escritura: Apps Script Web App
+// ═══════════════════════════════════════
+
+const SHEET_ID   = '1zPWnPXCqog8doUe5znolhznfWtgrSRl5dQEaPED1_8I';
+const SHEET_TAB  = 'Despachos';
+const APPS_SCRIPT_URL = localStorage.getItem('gs_write_url') || '';
+let GS_CONNECTED = false;
+
+function setSheetURL(url) {
+  localStorage.setItem('gs_write_url', url.trim());
+  location.reload();
+}
+
+// ── INDICADOR DE CONEXIÓN ──
+function renderConnectionStatus() {
+  const el = document.getElementById('conn-status');
+  if(!el) return;
+  if(GS_CONNECTED) {
+    el.innerHTML = `<span style="color:var(--success);font-size:12px;display:flex;align-items:center;gap:5px">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--success);display:inline-block"></span>
+      Google Sheets conectado
+      ${APPS_SCRIPT_URL ? '· escritura activa' : '<button onclick="openSheetConfig()" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--cmpc-green);text-decoration:underline">activar escritura →</button>'}
+    </span>`;
+  } else {
+    el.innerHTML = `<span style="color:var(--warning);font-size:12px;display:flex;align-items:center;gap:5px">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--warning);display:inline-block"></span>
+      Modo local
+      <button onclick="init()" style="background:none;border:none;cursor:pointer;font-size:11px;color:var(--cmpc-green);text-decoration:underline">reconectar</button>
+    </span>`;
+  }
+}
+
+function disconnectSheet() {
+  localStorage.removeItem('gs_write_url');
+  location.reload();
+}
+
+// ── MODAL CONFIGURACIÓN ESCRITURA ──
+function openSheetConfig() {
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">Activar escritura en Google Sheets</div>
+    <div class="modal-sub">La lectura ya está activa. Para guardar nuevas solicitudes necesitas un Apps Script.</div>
+    <div style="background:var(--surface2);border-radius:var(--radius);padding:1rem;margin-bottom:1rem;font-size:13px;line-height:1.9">
+      <strong>1.</strong> Abre tu Google Sheet "Despachos_Radix_AppSheet"<br>
+      <strong>2.</strong> Menú <em>Extensiones → Apps Script</em><br>
+      <strong>3.</strong> Pega el contenido del archivo <code style="font-size:11px;background:#eee;padding:1px 5px;border-radius:3px">apps_script_backend.gs</code><br>
+      <strong>4.</strong> <em>Implementar → Nueva implementación → Aplicación web</em><br>
+      &nbsp;&nbsp;&nbsp;Ejecutar como: <strong>Yo</strong> · Acceso: <strong>Cualquier persona</strong><br>
+      <strong>5.</strong> Copia la URL y pégala aquí:
+    </div>
+    <input type="text" id="gs-url-input" placeholder="https://script.google.com/macros/s/…/exec"
+      style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'Sora',sans-serif;outline:none;margin-bottom:12px"
+      value="${APPS_SCRIPT_URL}">
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="saveSheetURL()">Guardar</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cerrar</button>
+    </div>`;
+  document.getElementById('modal-backdrop').classList.add('open');
+}
+
+function saveSheetURL() {
+  const url = document.getElementById('gs-url-input').value.trim();
+  if(!url.startsWith('https://script.google.com')) {
+    showToast('⚠ URL inválida'); return;
+  }
+  setSheetURL(url);
+}
+
+// ── LECTURA desde Google Sheets vía gviz (pública, sin auth) ──
+async function gsLoadAll() {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_TAB)}`;
+    const r = await fetch(url);
+    const text = await r.text();
+    // gviz retorna: /*O_o*/google.visualization.Query.setResponse({...})
+    const json = JSON.parse(text.replace(/^[^\(]+\(/, '').replace(/\);?$/, ''));
+    const cols = json.table.cols.map(c => c.label);
+    const rows = json.table.rows || [];
+    if(!rows.length) return false;
+    DATA.length = 0;
+    rows.forEach(row => {
+      const obj = {};
+      cols.forEach((col, i) => {
+        const cell = row.c && row.c[i];
+        let val = cell ? (cell.v !== null && cell.v !== undefined ? cell.v : '') : '';
+        // fechas vienen como "Date(2026,4,27)" → convertir
+        if(typeof val === 'object' && val !== null) val = '';
+        if(typeof cell?.v === 'object' && cell?.v !== null && cols[i].toLowerCase().includes('fecha')) {
+          try {
+            const d = new Date(cell.v);
+            val = d.toISOString().slice(0,10);
+          } catch(e) { val = ''; }
+        }
+        obj[col] = String(val);
+      });
+      if(obj['Cantidad']) obj['Cantidad'] = parseInt(obj['Cantidad']) || 0;
+      else obj['cantidad'] = 0;
+      // normalizar claves al formato interno (minúsculas camelCase)
+      DATA.push({
+        id:          obj['Num_Ensayo']      || obj['Row_ID'] || '',
+        solicitante: obj['Solicitante']     || '',
+        area:        obj['Area']            || '',
+        especie:     obj['Especie']         || '',
+        genotipo:    obj['Genotipo']        || '',
+        cantidad:    parseInt(obj['Cantidad']) || 0,
+        retira:      obj['Quien_Retira']    || '',
+        codFundo:    obj['Codigo_Fundo']    || '',
+        fundo:       obj['Nombre_Fundo']    || '',
+        fecha:       obj['Fecha_Solicitud'] || '',
+        status:      estadoToKey(obj['Estado'] || 'pendiente'),
+        obs:         obj['Observaciones']   || '',
+        razonRechazo:obj['Motivo_Rechazo']  || '',
+      });
+    });
+    return DATA.length > 0;
+  } catch(e) {
+    console.warn('gsLoadAll error:', e);
+    return false;
+  }
+}
+
+// Convierte "En tránsito" → "en_transito" etc.
+function estadoToKey(s) {
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/\s+/g,'_')
+    .replace(/[^a-z_]/g,'');
+}
+
+// ── ESCRITURA vía Apps Script ──
+async function gsSave(entry) {
+  if(!APPS_SCRIPT_URL) return false;
+  try {
+    const r = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', mode:'cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({action:'append', row: entry})
+    });
+    const d = await r.json();
+    return d.status === 'ok';
+  } catch(e) { return false; }
+}
+
+async function gsUpdateStatus(id, newStatus, razonRechazo='') {
+  if(!APPS_SCRIPT_URL) return false;
+  try {
+    const r = await fetch(APPS_SCRIPT_URL, {
+      method:'POST', mode:'cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({action:'updateStatus', id, newStatus, razonRechazo})
+    });
+    const d = await r.json();
+    return d.status === 'ok';
+  } catch(e) { return false; }
+}
+
+// ── STATUS EDITOR (desde modal) ──
+function openStatusEditor(id) {
+  const d = DATA.find(x=>x.id===id);
+  if(!d) return;
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-title">Actualizar estado — ${id}</div>
+    <div class="modal-sub">${d.solicitante} · ${d.especie} · ${d.cantidad.toLocaleString()} plantas</div>
+    <div style="margin-bottom:1rem">
+      <label style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Nuevo estado</label>
+      <select id="new-status" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'Sora',sans-serif;outline:none" onchange="toggleRazonRechazo(this.value)">
+        <option value="pendiente" ${d.status==='pendiente'?'selected':''}>Pendiente</option>
+        <option value="en_revision" ${d.status==='en_revision'?'selected':''}>En revisión</option>
+        <option value="aprobado" ${d.status==='aprobado'?'selected':''}>Aprobado</option>
+        <option value="en_transito" ${d.status==='en_transito'?'selected':''}>En tránsito</option>
+        <option value="entregado" ${d.status==='entregado'?'selected':''}>Entregado</option>
+        <option value="rechazado" ${d.status==='rechazado'?'selected':''}>Rechazado</option>
+      </select>
+    </div>
+    <div id="razon-block" style="margin-bottom:1rem;display:${d.status==='rechazado'?'block':'none'}">
+      <label style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px">Motivo de rechazo</label>
+      <textarea id="razon-input" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'Sora',sans-serif;outline:none;min-height:80px">${d.razonRechazo||''}</textarea>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="applyStatusUpdate('${id}')">Guardar estado</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    </div>`;
+  document.getElementById('modal-backdrop').classList.add('open');
+}
+
+function toggleRazonRechazo(val) {
+  document.getElementById('razon-block').style.display = val==='rechazado'?'block':'none';
+}
+
+async function applyStatusUpdate(id) {
+  const newStatus = document.getElementById('new-status').value;
+  const razon = document.getElementById('razon-input')?.value || '';
+  const d = DATA.find(x=>x.id===id);
+  if(!d) return;
+  d.status = newStatus;
+  if(newStatus==='rechazado') d.razonRechazo = razon;
+  closeModal();
+  renderAll();
+  renderRecientes();
+  renderRechazados();
+  if(APPS_SCRIPT_URL) {
+    const ok = await gsUpdateStatus(id, newStatus, razon);
+    showToast(ok ? '✓ Estado actualizado en Google Sheets' : '⚠ Guardado local (Sheets sin conexión)');
+  } else {
+    showToast('✓ Estado actualizado (modo local)');
+  }
+}
+
+// ── OVERRIDE submitForm para guardar en Sheets ──
+const _origSubmit = submitForm;
+submitForm = async function() {
+  const required = ['f-ensayo','f-solicitante','f-area','f-especie','f-genotipo','f-cantidad','f-retira','f-cod-fundo','f-fundo'];
+  let ok = true;
+  required.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el.value.trim()) { el.style.borderColor='#c0392b'; ok=false; }
+    else el.style.borderColor='';
+  });
+  if(!ok) { showToast('⚠ Completa todos los campos obligatorios'); return; }
+
+  const newEntry = {
+    id: document.getElementById('f-ensayo').value.trim(),
+    solicitante: document.getElementById('f-solicitante').value.trim(),
+    area: document.getElementById('f-area').value,
+    especie: document.getElementById('f-especie').value,
+    genotipo: document.getElementById('f-genotipo').value.trim(),
+    cantidad: parseInt(document.getElementById('f-cantidad').value)||0,
+    retira: document.getElementById('f-retira').value.trim(),
+    codFundo: document.getElementById('f-cod-fundo').value.trim(),
+    fundo: document.getElementById('f-fundo').value.trim(),
+    fecha: document.getElementById('f-fecha').value,
+    status: 'pendiente',
+    obs: document.getElementById('f-obs').value.trim(),
+  };
+
+  DATA.unshift(newEntry);
+  renderAll();
+  renderRecientes();
+  clearForm();
+
+  if(APPS_SCRIPT_URL) {
+    showToast('⏳ Guardando en Google Sheets…');
+    const saved = await gsSave(newEntry);
+    showToast(saved ? '✓ Solicitud '+newEntry.id+' guardada en Google Sheets' : '⚠ Guardado solo local (Sheets sin conexión)');
+  } else {
+    showToast('✓ Solicitud '+newEntry.id+' registrada (modo local)');
+  }
+  showPage('despachos', document.querySelectorAll('.nav-btn')[1]);
+};
+
+// ─── Agregar botón "Actualizar estado" en modal openModal ───
+const _origOpenModal = openModal;
+openModal = function(id) {
+  _origOpenModal(id);
+  const existingActions = document.querySelector('#modal-content [style*="border-top"]');
+  if(existingActions) {
+    const editBtn = document.createElement('button');
+    editBtn.className = 'btn btn-secondary';
+    editBtn.style.fontSize = '12px';
+    editBtn.textContent = '✏ Cambiar estado';
+    editBtn.onclick = () => openStatusEditor(id);
+    existingActions.insertBefore(editBtn, existingActions.firstChild.nextSibling);
+  }
+};
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+async function init() {
+  showToast('⏳ Conectando con Google Sheets…');
+  const loaded = await gsLoadAll();
+  if(loaded) {
+    GS_CONNECTED = true;
+    showToast('✓ Datos cargados desde Google Sheets (' + DATA.length + ' registros)');
+  } else {
+    showToast('⚠ Modo local — verifica que la hoja sea pública');
+  }
+  renderRecientes();
+  renderAll();
+  renderRechazados();
+  initCharts();
+  renderConnectionStatus();
+}
+
+init();
+</script>
+</body>
+</html>
